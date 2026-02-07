@@ -2,5 +2,10 @@ venv/
 **/venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 *.zip
+archive (2)/
+*.pth
 .DS_Store
+
