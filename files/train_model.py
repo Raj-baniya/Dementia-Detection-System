@@ -39,3 +39,28 @@ def get_args():
 
 def build_model(num_classes: int = 4, img_size: int = 300, dropout: float = 0.3):
     """
+    Build EfficientNet-B3 transfer learning model.
+
+    Architecture:
+        EfficientNet-B3 (ImageNet weights, frozen) →
+        GlobalAveragePooling2D →
+        BatchNormalization →
+        Dense(256, relu) →
+        Dropout(0.3) →
+        Dense(4, softmax)
+    """
+    import tensorflow as tf
+    from tensorflow.keras import layers, regularizers
+
+    base_model = tf.keras.applications.EfficientNetB3(
+        include_top=False,
+        weights="imagenet",
+        input_shape=(img_size, img_size, 3),
+        pooling=None,
+    )
+    base_model.trainable = False   # freeze for warm-up phase
+
+    inputs  = tf.keras.Input(shape=(img_size, img_size, 3))
+    x       = tf.keras.applications.efficientnet.preprocess_input(inputs)
+    x       = base_model(x, training=False)
+    x       = layers.GlobalAveragePooling2D()(x)
