@@ -64,3 +64,28 @@ def build_model(num_classes: int = 4, img_size: int = 300, dropout: float = 0.3)
     x       = tf.keras.applications.efficientnet.preprocess_input(inputs)
     x       = base_model(x, training=False)
     x       = layers.GlobalAveragePooling2D()(x)
+    x       = layers.BatchNormalization()(x)
+    x       = layers.Dense(256, activation="relu",
+                           kernel_regularizer=regularizers.l2(1e-4))(x)
+    x       = layers.Dropout(dropout)(x)
+    outputs = layers.Dense(num_classes, activation="softmax")(x)
+
+    model = tf.keras.Model(inputs, outputs, name="EfficientNetB3_Dementia")
+    return model, base_model
+
+
+def unfreeze_top_layers(base_model, n_layers: int = 30):
+    """Unfreeze the top n layers of the base model for fine-tuning."""
+    base_model.trainable = True
+    for layer in base_model.layers[:-n_layers]:
+        layer.trainable = False
+    print(f"  Fine-tuning: {sum(1 for l in base_model.layers if l.trainable)} / "
+          f"{len(base_model.layers)} base layers trainable")
+
+
+def make_generators(data_dir: str, img_size: int, batch_size: int):
+    """Create train and validation data generators with augmentation."""
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+    train_gen = ImageDataGenerator(
+        rescale=1.0 / 255,
