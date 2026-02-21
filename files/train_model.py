@@ -89,3 +89,38 @@ def make_generators(data_dir: str, img_size: int, batch_size: int):
 
     train_gen = ImageDataGenerator(
         rescale=1.0 / 255,
+        rotation_range=15,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True,
+        brightness_range=[0.85, 1.15],
+        fill_mode="nearest",
+        validation_split=0.2,       # use this split if val/ subdir not present
+    )
+
+    val_gen = ImageDataGenerator(rescale=1.0 / 255)
+
+    train_path = os.path.join(data_dir, "train")
+    val_path   = os.path.join(data_dir, "val")
+
+    if not os.path.exists(val_path):
+        # Fallback: use validation_split from train dir
+        print("  val/ directory not found — using 20% validation split from train/")
+        train_data = train_gen.flow_from_directory(
+            train_path, target_size=(img_size, img_size),
+            batch_size=batch_size, class_mode="categorical",
+            subset="training", shuffle=True, seed=42,
+        )
+        val_data = train_gen.flow_from_directory(
+            train_path, target_size=(img_size, img_size),
+            batch_size=batch_size, class_mode="categorical",
+            subset="validation", shuffle=False, seed=42,
+        )
+    else:
+        train_data = train_gen.flow_from_directory(
+            train_path, target_size=(img_size, img_size),
+            batch_size=batch_size, class_mode="categorical",
+            shuffle=True, seed=42,
+        )
+        val_data = val_gen.flow_from_directory(
