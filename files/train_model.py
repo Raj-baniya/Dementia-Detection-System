@@ -124,3 +124,28 @@ def make_generators(data_dir: str, img_size: int, batch_size: int):
             shuffle=True, seed=42,
         )
         val_data = val_gen.flow_from_directory(
+            val_path, target_size=(img_size, img_size),
+            batch_size=batch_size, class_mode="categorical",
+            shuffle=False,
+        )
+
+    return train_data, val_data
+
+
+def train(args):
+    import tensorflow as tf
+
+    os.makedirs(args.model_dir, exist_ok=True)
+
+    print("=" * 60)
+    print("  NeuroScan AI — EfficientNet-B3 Training")
+    print("=" * 60)
+    print(f"  Data dir   : {args.data_dir}")
+    print(f"  Model dir  : {args.model_dir}")
+    print(f"  Image size : {args.img_size}×{args.img_size}")
+    print(f"  Batch size : {args.batch_size}")
+    print(f"  Epochs     : {args.epochs}")
+    print(f"  LR         : {args.lr}")
+    print("=" * 60)
+
+    # ── Data generators ──────────────────────────────────────────────────────
