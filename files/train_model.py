@@ -149,3 +149,28 @@ def train(args):
     print("=" * 60)
 
     # ── Data generators ──────────────────────────────────────────────────────
+    print("\n[1/4] Preparing data generators...")
+    train_data, val_data = make_generators(args.data_dir, args.img_size, args.batch_size)
+
+    class_indices = train_data.class_indices
+    with open(os.path.join(args.model_dir, "class_indices.json"), "w") as f:
+        json.dump(class_indices, f, indent=2)
+    print(f"  Classes found: {class_indices}")
+
+    # Compute class weights to handle imbalance
+    n_samples = np.array([v for v in train_data.classes])
+    class_counts = np.bincount(n_samples)
+    total = class_counts.sum()
+    class_weights = {i: total / (len(class_counts) * c) for i, c in enumerate(class_counts)}
+    print(f"  Class weights: {class_weights}")
+
+    # ── Build model ───────────────────────────────────────────────────────────
+    print("\n[2/4] Building EfficientNet-B3 model...")
+    model, base_model = build_model(num_classes=len(class_indices), img_size=args.img_size)
+    model.summary(print_fn=lambda x: None)   # suppress verbose output
+    print(f"  Total parameters: {model.count_params():,}")
+
+    # ── Phase 1: Warm-up (frozen base) ────────────────────────────────────────
+    print(f"\n[3/4] Phase 1: Warm-up training ({args.warmup} epochs, base frozen)...")
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr),
