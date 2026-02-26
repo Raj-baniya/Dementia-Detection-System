@@ -174,3 +174,33 @@ def train(args):
     print(f"\n[3/4] Phase 1: Warm-up training ({args.warmup} epochs, base frozen)...")
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr),
+        loss="categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    callbacks_warmup = [
+        tf.keras.callbacks.ModelCheckpoint(
+            filepath=os.path.join(args.model_dir, "best_warmup.h5"),
+            monitor="val_accuracy", save_best_only=True, verbose=1,
+        ),
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_accuracy", patience=8, restore_best_weights=True, verbose=1,
+        ),
+        tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss", factor=0.5, patience=4, min_lr=1e-7, verbose=1,
+        ),
+    ]
+
+    history_warmup = model.fit(
+        train_data,
+        validation_data=val_data,
+        epochs=args.warmup,
+        class_weight=class_weights,
+        callbacks=callbacks_warmup,
+        verbose=1,
+    )
+
+    # ── Phase 2: Fine-tuning (unfreeze top layers) ────────────────────────────
+    print(f"\n[4/4] Phase 2: Fine-tuning (top {args.unfreeze} layers unfrozen)...")
+    unfreeze_top_layers(base_model, args.unfreeze)
+
