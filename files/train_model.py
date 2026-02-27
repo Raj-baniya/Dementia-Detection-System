@@ -204,3 +204,38 @@ def train(args):
     print(f"\n[4/4] Phase 2: Fine-tuning (top {args.unfreeze} layers unfrozen)...")
     unfreeze_top_layers(base_model, args.unfreeze)
 
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr / 10),   # lower LR for fine-tuning
+        loss="categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    remaining_epochs = args.epochs - args.warmup
+    callbacks_finetune = [
+        tf.keras.callbacks.ModelCheckpoint(
+            filepath=os.path.join(args.model_dir, "efficientnet_b3_dementia.h5"),
+            monitor="val_accuracy", save_best_only=True, verbose=1,
+        ),
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_accuracy", patience=10, restore_best_weights=True, verbose=1,
+        ),
+        tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss", factor=0.3, patience=5, min_lr=1e-8, verbose=1,
+        ),
+    ]
+
+    history_finetune = model.fit(
+        train_data,
+        validation_data=val_data,
+        epochs=remaining_epochs,
+        initial_epoch=args.warmup,
+        class_weight=class_weights,
+        callbacks=callbacks_finetune,
+        verbose=1,
+    )
+
+    # ── Save full training history ────────────────────────────────────────────
+    combined_history = {}
+    for key in history_warmup.history:
+        combined_history[key] = (
+            history_warmup.history[key] + history_finetune.history.get(key, [])
