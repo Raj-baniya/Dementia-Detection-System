@@ -239,3 +239,45 @@ def train(args):
     for key in history_warmup.history:
         combined_history[key] = (
             history_warmup.history[key] + history_finetune.history.get(key, [])
+        )
+    with open(os.path.join(args.model_dir, "training_history.json"), "w") as f:
+        json.dump(combined_history, f, indent=2)
+
+    # ── Final evaluation ──────────────────────────────────────────────────────
+    print("\n" + "=" * 60)
+    print("  Evaluation on Validation Set")
+    print("=" * 60)
+    loss, acc = model.evaluate(val_data, verbose=0)
+    print(f"  Validation Loss     : {loss:.4f}")
+    print(f"  Validation Accuracy : {acc*100:.2f}%")
+
+    # Per-class report
+    val_data.reset()
+    y_true = val_data.classes
+    y_pred_probs = model.predict(val_data, verbose=0)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+
+    try:
+        from sklearn.metrics import classification_report, confusion_matrix
+        idx_to_class = {v: k for k, v in class_indices.items()}
+        target_names = [idx_to_class[i] for i in range(len(class_indices))]
+        print("\n  Per-Class Classification Report:")
+        print(classification_report(y_true, y_pred, target_names=target_names, digits=4))
+        cm = confusion_matrix(y_true, y_pred)
+        print("  Confusion Matrix:")
+        print(cm)
+        np.save(os.path.join(args.model_dir, "confusion_matrix.npy"), cm)
+    except ImportError:
+        print("  (Install scikit-learn for detailed classification report)")
+
+    # Save final model again (in case checkpoint didn't fire on last epoch)
+    final_path = os.path.join(args.model_dir, "efficientnet_b3_dementia.h5")
+    if not os.path.exists(final_path):
+        model.save(final_path)
+    print(f"\n  ✅ Model saved to: {final_path}")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    args = get_args()
+    train(args)
