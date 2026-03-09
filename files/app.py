@@ -39,3 +39,38 @@ except ImportError:
 
 try:
     import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    from matplotlib.gridspec import GridSpec
+    MPL_AVAILABLE = True
+except ImportError:
+    MPL_AVAILABLE = False
+
+try:
+    import plotly.graph_objects as go
+    import plotly.express as px
+    from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+
+try:
+    import seaborn as sns
+    SNS_AVAILABLE = True
+except ImportError:
+    SNS_AVAILABLE = False
+
+try:
+    import torch
+    import torch.nn as nn
+    import timm
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
+# ─── Constants ────────────────────────────────────────────────────────────────
+CLASS_NAMES = ["Non Demented", "Very Mild Demented", "Mild Demented", "Moderate Demented"]
+INPUT_SIZE   = (300, 300)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MODEL_CANDIDATE_PATHS = [
+    Path(r"F:\Dementia-MiniProject\final_model\content\drive\MyDrive\DementiaProject\checkpoints_efficientnet\final_model.pth"),
+    Path(r"F:\Dementia-MiniProject\best_model\content\drive\MyDrive\DementiaProject\checkpoints_efficientnet\best_model.pth"),
