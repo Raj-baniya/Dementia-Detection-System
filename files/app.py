@@ -149,3 +149,73 @@ def inject_css():
         --bg-primary:   #0A0E1A;
         --bg-card:      #111827;
         --bg-card2:     #1A2235;
+        --accent-blue:  #3B82F6;
+        --accent-cyan:  #06B6D4;
+        --accent-green: #10B981;
+        --text-primary: #F1F5F9;
+        --text-muted:   #94A3B8;
+        --border:       rgba(255,255,255,0.08);
+        --shadow:       0 8px 32px rgba(0,0,0,0.4);
+      }
+
+      .stApp { background: var(--bg-primary); font-family: 'Inter', sans-serif; }
+
+      /* Sidebar */
+      [data-testid="stSidebar"] {
+        background: var(--bg-card) !important;
+        border-right: 1px solid var(--border);
+      }
+
+      /* Cards */
+      .ns-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow);
+      }
+      .ns-card-accent {
+        background: linear-gradient(135deg, #1A2235 0%, #0F172A 100%);
+        border: 1px solid rgba(59,130,246,0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+      }
+
+      /* Metric tiles */
+      .metric-tile {
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+      }
+      .metric-value {
+        font-family: 'Space Mono', monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #3B82F6, #06B6D4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+      }
+      .metric-label {
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-top: 6px;
+      }
+
+      /* Result badge */
+      .result-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 12px 0;
+      }
