@@ -219,3 +219,58 @@ def inject_css():
         font-size: 1.1rem;
         margin: 12px 0;
       }
+
+      /* Confidence bar */
+      .conf-bar-wrap { margin: 6px 0; }
+      .conf-bar-label {
+        display: flex;
+        justify-content: space-between;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        margin-bottom: 4px;
+      }
+      .conf-bar-bg {
+        background: rgba(255,255,255,0.06);
+        border-radius: 6px;
+        height: 10px;
+        overflow: hidden;
+      }
+      .conf-bar-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.8s ease;
+      }
+
+      /* Section headings */
+      .section-heading {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-left: 3px solid var(--accent-blue);
+        padding-left: 12px;
+        margin: 20px 0 14px 0;
+      }
+
+      /* Disclaimer */
+      .disclaimer-box {
+        background: rgba(239,68,68,0.08);
+        border: 1px solid rgba(239,68,68,0.3);
+        border-radius: 12px;
+        padding: 16px 20px;
+        color: #FCA5A5;
+        font-size: 0.84rem;
+        line-height: 1.6;
+        margin-top: 12px;
+      }
+
+      /* Hero header */
+      .hero {
+        text-align: center;
+        padding: 40px 20px 30px;
+      }
+      .hero h1 {
+        font-size: 2.6rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #10B981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
