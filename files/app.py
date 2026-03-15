@@ -274,3 +274,58 @@ def inject_css():
         background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #10B981 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
+      }
+      .hero p {
+        color: var(--text-muted);
+        font-size: 1rem;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* Pill tag */
+      .pill {
+        display: inline-block;
+        background: rgba(59,130,246,0.15);
+        color: #93C5FD;
+        border: 1px solid rgba(59,130,246,0.3);
+        border-radius: 20px;
+        padding: 3px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin: 2px;
+      }
+
+      /* Upload zone */
+      [data-testid="stFileUploadDropzone"] {
+        background: rgba(59,130,246,0.05) !important;
+        border: 2px dashed rgba(59,130,246,0.4) !important;
+        border-radius: 16px !important;
+      }
+
+      /* Tabs */
+      .stTabs [data-baseweb="tab-list"] {
+        background: var(--bg-card);
+        border-radius: 10px;
+        padding: 4px;
+        gap: 4px;
+      }
+      .stTabs [data-baseweb="tab"] {
+        color: var(--text-muted) !important;
+        border-radius: 8px;
+      }
+      .stTabs [aria-selected="true"] {
+        background: rgba(59,130,246,0.2) !important;
+        color: #93C5FD !important;
+      }
+
+      /* Remove default Streamlit padding */
+      .block-container { padding-top: 1rem !important; }
+
+      /* Table styling */
+      .stDataFrame { border-radius: 12px; overflow: hidden; }
+
+      /* Success / warning / error */
+      .stSuccess, .stWarning, .stError, .stInfo {
+        border-radius: 10px !important;
