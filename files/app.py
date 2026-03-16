@@ -329,3 +329,68 @@ def inject_css():
       /* Success / warning / error */
       .stSuccess, .stWarning, .stError, .stInfo {
         border-radius: 10px !important;
+      }
+
+      h1, h2, h3, h4 { color: var(--text-primary) !important; }
+      p, li { color: var(--text-muted); }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: var(--bg-primary); }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# ─── Model loading ────────────────────────────────────────────────────────────
+@st.cache_resource(show_spinner=False)
+def load_model():
+    """Load real PyTorch EfficientNet-B3 checkpoint. Returns (bundle, status_message)."""
+    if not TORCH_AVAILABLE:
+        return None, "PyTorch/timm not installed. Run: pip install torch torchvision timm"
+
+    model_path = next((p for p in MODEL_CANDIDATE_PATHS if p.exists()), None)
+    if model_path is None:
+        return None, "Real model checkpoint not found at configured .pth path(s)."
+
+    class DementiaEfficientNetB3(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.backbone = timm.create_model(
+                "efficientnet_b3",
+                pretrained=False,
+                num_classes=0,
+                global_pool="avg",
+            )
+            self.head = nn.Sequential(
+                nn.Linear(1536, 512),
+                nn.BatchNorm1d(512),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.30),
+                nn.Linear(512, 128),
+                nn.BatchNorm1d(128),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.20),
+                nn.Linear(128, 4),
+            )
+
+        def forward(self, x):
+            feats = self.backbone(x)
+            return self.head(feats)
+
+    try:
+        checkpoint = torch.load(str(model_path), map_location="cpu")
+        state_dict = checkpoint.get("model") if isinstance(checkpoint, dict) else checkpoint
+        if not isinstance(state_dict, dict):
+            return None, "Unsupported checkpoint format. Expected a state_dict under key 'model'."
+
+        model = DementiaEfficientNetB3()
+        model.load_state_dict(state_dict, strict=True)
+        model.eval()
+
+        raw_classes = checkpoint.get(
+            "classes",
+            ["MildDemented", "ModerateDemented", "NonDemented", "VeryMildDemented"],
+        )
+        display_classes = [display_class_name(c) for c in raw_classes]
+        bundle = {
