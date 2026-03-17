@@ -394,3 +394,68 @@ def load_model():
         )
         display_classes = [display_class_name(c) for c in raw_classes]
         bundle = {
+            "model": model,
+            "classes": display_classes,
+            "val_acc": checkpoint.get("val_acc"),
+            "val_auroc": checkpoint.get("val_auroc"),
+            "path": str(model_path),
+        }
+        status = f"✅ Real model loaded: {model_path.name}"
+        return bundle, status
+    except Exception as e:
+        return None, f"Error loading .pth model: {e}"
+
+
+# ─── Preprocessing ────────────────────────────────────────────────────────────
+def preprocess_image(pil_image: Image.Image):
+    """Preprocess image for PyTorch EfficientNet-B3 inference."""
+    img = pil_image.convert("RGB")
+    img = img.resize(INPUT_SIZE, Image.LANCZOS)
+    arr = np.array(img, dtype=np.float32) / 255.0
+    mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+    std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+    arr = (arr - mean) / std
+    arr = np.transpose(arr, (2, 0, 1))
+    tensor = torch.from_numpy(arr).unsqueeze(0)
+    return tensor
+
+
+# ─── Inference ────────────────────────────────────────────────────────────────
+def build_tta_views(pil_image: Image.Image, num_views: int = 8):
+    """Build deterministic TTA views (flip/rotate/crop variants)."""
+    base = pil_image.convert("RGB")
+    views = [base]
+
+    # Horizontal mirror for symmetry robustness on MRI slices.
+    views.append(ImageOps.mirror(base))
+
+    # Mild rotations to reduce orientation sensitivity.
+    views.append(base.rotate(-8, resample=Image.BICUBIC, expand=False, fillcolor=(0, 0, 0)))
+    views.append(base.rotate(8, resample=Image.BICUBIC, expand=False, fillcolor=(0, 0, 0)))
+
+    # Center crop + resize to stabilize border/background effects.
+    w, h = base.size
+    crop_margin_w = max(int(w * 0.04), 1)
+    crop_margin_h = max(int(h * 0.04), 1)
+    crop = base.crop((crop_margin_w, crop_margin_h, w - crop_margin_w, h - crop_margin_h)).resize(base.size, Image.LANCZOS)
+    views.append(crop)
+
+    # Additional mild transforms for higher TTA budgets.
+    views.append(ImageOps.mirror(crop))
+    views.append(base.rotate(-5, resample=Image.BICUBIC, expand=False, fillcolor=(0, 0, 0)))
+    views.append(base.rotate(5, resample=Image.BICUBIC, expand=False, fillcolor=(0, 0, 0)))
+    views.append(base.rotate(-12, resample=Image.BICUBIC, expand=False, fillcolor=(0, 0, 0)))
+    views.append(base.rotate(12, resample=Image.BICUBIC, expand=False, fillcolor=(0, 0, 0)))
+    views.append(ImageOps.flip(base))
+    views.append(ImageOps.mirror(base.rotate(6, resample=Image.BICUBIC, expand=False, fillcolor=(0, 0, 0))))
+
+    return views[:max(1, num_views)]
+
+
+def run_inference(model_bundle, pil_image: Image.Image, tta_views: int = 8, temperature: float = 0.9):
+    """
+    Run model inference and return (predicted_class, confidence, probabilities_dict).
+    Applies temperature scaling (T=0.5) to sharpen predictions.
+    """
+    model = model_bundle["model"]
+    views = build_tta_views(pil_image, num_views=tta_views)
