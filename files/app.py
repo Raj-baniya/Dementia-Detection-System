@@ -459,3 +459,63 @@ def run_inference(model_bundle, pil_image: Image.Image, tta_views: int = 8, temp
     """
     model = model_bundle["model"]
     views = build_tta_views(pil_image, num_views=tta_views)
+
+    with torch.no_grad():
+        logits_list = []
+        for view in views:
+            inputs = preprocess_image(view)
+            logits_list.append(model(inputs))
+
+        mean_logits = torch.mean(torch.cat(logits_list, dim=0), dim=0, keepdim=True)
+
+        # Temperature scaling: T<1 sharpens, T>1 smooths (better calibration typically near 1).
+        temp = max(float(temperature), 1e-3)
+        calibrated_logits = mean_logits / temp
+        probs = torch.softmax(calibrated_logits, dim=1).cpu().numpy()[0]
+
+    class_idx = int(np.argmax(probs))
+    classes = model_bundle.get("classes", CLASS_NAMES)
+    pred_class = classes[class_idx] if class_idx < len(classes) else CLASS_NAMES[class_idx]
+    confidence = float(probs[class_idx])
+    return pred_class, confidence
+
+
+# ─── GradCAM ─────────────────────────────────────────────────────────────────
+def generate_gradcam(model_bundle, pil_image: Image.Image, class_idx: int):
+    """Generate GradCAM heatmap. Returns numpy array or None."""
+    if not TORCH_AVAILABLE or model_bundle is None:
+        return None
+    try:
+        model = model_bundle["model"]
+        conv_output = []
+        gradients = []
+
+        def fwd_hook(_module, _inp, out):
+            conv_output.append(out)
+
+        def bwd_hook(_module, _gin, gout):
+            gradients.append(gout[0])
+
+        target_layer = model.backbone.conv_head
+        hook1 = target_layer.register_forward_hook(fwd_hook)
+        hook2 = target_layer.register_full_backward_hook(bwd_hook)
+
+        inputs = preprocess_image(pil_image)
+        outputs = model(inputs)
+        score = outputs[:, class_idx].sum()
+        model.zero_grad(set_to_none=True)
+        score.backward()
+
+        acts = conv_output[0][0].detach().cpu().numpy()
+        grads = gradients[0][0].detach().cpu().numpy()
+        weights = np.mean(grads, axis=(1, 2))
+        cam = np.sum(weights[:, None, None] * acts, axis=0)
+
+        cam = np.maximum(cam, 0)
+        cam = cam / (cam.max() + 1e-8)
+        if CV2_AVAILABLE:
+            cam = cv2.resize(cam, INPUT_SIZE)
+        else:
+            cam = np.array(Image.fromarray(cam).resize(INPUT_SIZE))
+        hook1.remove()
+        hook2.remove()
