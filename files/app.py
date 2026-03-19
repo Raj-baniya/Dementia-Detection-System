@@ -519,3 +519,68 @@ def generate_gradcam(model_bundle, pil_image: Image.Image, class_idx: int):
             cam = np.array(Image.fromarray(cam).resize(INPUT_SIZE))
         hook1.remove()
         hook2.remove()
+        return cam
+    except Exception:
+        return None
+
+
+def plot_training_history(history: dict):
+    """Plotly chart from real training history json."""
+    epochs = list(range(1, len(history.get("train_loss", [])) + 1))
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        subplot_titles=("Loss", "Accuracy", "AUROC", "Learning Rate"),
+        vertical_spacing=0.18,
+    )
+
+    if history.get("train_loss"):
+        fig.add_trace(go.Scatter(x=epochs, y=history["train_loss"], mode="lines", name="Train Loss", line=dict(color="#06B6D4")), row=1, col=1)
+    if history.get("val_loss"):
+        fig.add_trace(go.Scatter(x=epochs, y=history["val_loss"], mode="lines", name="Val Loss", line=dict(color="#EF4444")), row=1, col=1)
+    if history.get("train_acc"):
+        fig.add_trace(go.Scatter(x=epochs, y=history["train_acc"], mode="lines", name="Train Acc", line=dict(color="#10B981")), row=1, col=2)
+    if history.get("val_acc"):
+        fig.add_trace(go.Scatter(x=epochs, y=history["val_acc"], mode="lines", name="Val Acc", line=dict(color="#3B82F6")), row=1, col=2)
+    if history.get("val_auroc"):
+        fig.add_trace(go.Scatter(x=epochs, y=history["val_auroc"], mode="lines", name="Val AUROC", line=dict(color="#F59E0B")), row=2, col=1)
+    if history.get("lr"):
+        fig.add_trace(go.Scatter(x=epochs, y=history["lr"], mode="lines", name="LR", line=dict(color="#A78BFA")), row=2, col=2)
+
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=700,
+        margin=dict(l=10, r=10, t=40, b=10),
+        legend=dict(orientation="h", y=1.05, x=1, xanchor="right", font=dict(color="#94A3B8")),
+        font=dict(family="Inter"),
+    )
+    fig.update_xaxes(showgrid=True, gridcolor="rgba(255,255,255,0.05)", tickfont=dict(color="#64748B"))
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(255,255,255,0.05)", tickfont=dict(color="#64748B"))
+    return fig
+
+
+# ─── Plotting helpers ─────────────────────────────────────────────────────────
+def plot_probability_bars(prob_dict: dict):
+    """Plotly horizontal bar chart for class probabilities."""
+    names  = list(prob_dict.keys())
+    values = [v * 100 for v in prob_dict.values()]
+    colors = [CLASS_COLORS[n] for n in names]
+
+    fig = go.Figure(go.Bar(
+        x=values,
+        y=names,
+        orientation="h",
+        marker=dict(color=colors, opacity=0.9),
+        text=[f"{v:.1f}%" for v in values],
+        textposition="outside",
+        textfont=dict(color="#94A3B8", size=12),
+    ))
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=220,
+        margin=dict(l=0, r=60, t=10, b=10),
+        xaxis=dict(
+            range=[0, 110],
+            showgrid=True,
