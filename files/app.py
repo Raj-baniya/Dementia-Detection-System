@@ -584,3 +584,68 @@ def plot_probability_bars(prob_dict: dict):
         xaxis=dict(
             range=[0, 110],
             showgrid=True,
+            gridcolor="rgba(255,255,255,0.05)",
+            ticksuffix="%",
+            tickfont=dict(color="#64748B"),
+            zeroline=False,
+        ),
+        yaxis=dict(
+            tickfont=dict(color="#94A3B8", size=12),
+            autorange="reversed",
+        ),
+        font=dict(family="Inter"),
+        showlegend=False,
+    )
+    return fig
+
+
+def plot_confusion_matrix(cm: np.ndarray):
+    """Plotly annotated confusion matrix heatmap."""
+    # Normalize
+    cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
+    annotations = []
+    for i in range(len(CLASS_NAMES)):
+        for j in range(len(CLASS_NAMES)):
+            annotations.append(dict(
+                x=j, y=i,
+                text=f"<b>{cm[i,j]}</b><br><span style='font-size:10px'>{cm_norm[i,j]*100:.1f}%</span>",
+                showarrow=False,
+                font=dict(color="white" if cm_norm[i,j] > 0.4 else "#94A3B8", size=11),
+                xref="x", yref="y",
+            ))
+
+    short_names = ["Non\nDemented", "Very Mild", "Mild", "Moderate"]
+    fig = go.Figure(go.Heatmap(
+        z=cm_norm,
+        x=short_names,
+        y=short_names,
+        colorscale=[[0, "#0F172A"], [0.5, "#1E3A5F"], [1, "#3B82F6"]],
+        showscale=True,
+        colorbar=dict(
+            tickfont=dict(color="#64748B"),
+            tickformat=".0%",
+            len=0.85,
+        ),
+    ))
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=360,
+        margin=dict(l=10, r=10, t=30, b=10),
+        annotations=annotations,
+        xaxis=dict(title=dict(text="Predicted", font=dict(color="#64748B")), tickfont=dict(color="#94A3B8"), showgrid=False),
+        yaxis=dict(title=dict(text="Actual", font=dict(color="#64748B")), tickfont=dict(color="#94A3B8"), autorange="reversed"),
+        title=dict(text="Confusion Matrix — Validation Set (n=3,614)", font=dict(color="#94A3B8", size=13), x=0.5),
+    )
+    return fig
+
+
+def plot_model_comparison():
+    """Plotly grouped bar chart comparing models."""
+    models  = list(MODEL_COMPARISON.keys())
+    metrics = ["accuracy", "precision", "recall", "f1"]
+    colors  = ["#3B82F6", "#06B6D4", "#10B981", "#F59E0B"]
+
+    fig = go.Figure()
+    for metric, color in zip(metrics, colors):
+        fig.add_trace(go.Bar(
