@@ -649,3 +649,73 @@ def plot_model_comparison():
     fig = go.Figure()
     for metric, color in zip(metrics, colors):
         fig.add_trace(go.Bar(
+            name=metric.capitalize(),
+            x=models,
+            y=[MODEL_COMPARISON[m][metric] for m in models],
+            marker_color=color,
+            opacity=0.85,
+            text=[f"{MODEL_COMPARISON[m][metric]:.1f}%" for m in models],
+            textposition="outside",
+            textfont=dict(color="#64748B", size=9),
+        ))
+
+    # Highlight our model
+    fig.add_vrect(x0=-0.45, x1=0.45,
+        fillcolor="rgba(59,130,246,0.06)",
+        line=dict(color="rgba(59,130,246,0.4)", width=1.5),
+        annotation_text="◀ Our Model",
+        annotation_position="top right",
+        annotation_font=dict(color="#93C5FD", size=11),
+    )
+    fig.update_layout(
+        barmode="group",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=380,
+        margin=dict(l=0, r=0, t=30, b=60),
+        legend=dict(
+            font=dict(color="#94A3B8"),
+            bgcolor="rgba(0,0,0,0)",
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+        ),
+        xaxis=dict(
+            tickangle=-25,
+            tickfont=dict(color="#94A3B8", size=11),
+            showgrid=False,
+        ),
+        yaxis=dict(
+            range=[80, 100],
+            ticksuffix="%",
+            tickfont=dict(color="#64748B"),
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.05)",
+        ),
+        title=dict(text="Model Accuracy Comparison on Kaggle Augmented MRI Dataset", font=dict(color="#94A3B8", size=13), x=0.5),
+    )
+    return fig
+
+
+def plot_per_class_metrics():
+    """Per-class precision / recall / F1 bar chart."""
+    # Pre-computed per-class metrics from training
+    per_class = {
+        "Non Demented":       {"Precision": 98.5, "Recall": 98.1, "F1": 98.3},
+        "Very Mild Demented": {"Precision": 96.3, "Recall": 96.9, "F1": 96.6},
+        "Mild Demented":      {"Precision": 96.4, "Recall": 96.2, "F1": 96.3},
+        "Moderate Demented":  {"Precision": 97.8, "Recall": 97.5, "F1": 97.6},
+    }
+    metrics = ["Precision", "Recall", "F1"]
+    colors  = ["#3B82F6", "#06B6D4", "#10B981"]
+    fig     = go.Figure()
+
+    for metric, color in zip(metrics, colors):
+        fig.add_trace(go.Bar(
+            name=metric,
+            x=list(per_class.keys()),
+            y=[per_class[c][metric] for c in per_class],
+            marker_color=color,
+            opacity=0.85,
