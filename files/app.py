@@ -719,3 +719,73 @@ def plot_per_class_metrics():
             y=[per_class[c][metric] for c in per_class],
             marker_color=color,
             opacity=0.85,
+            text=[f"{per_class[c][metric]:.1f}%" for c in per_class],
+            textposition="outside",
+            textfont=dict(color="#64748B", size=9),
+        ))
+    fig.update_layout(
+        barmode="group",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=320,
+        margin=dict(l=0, r=0, t=30, b=10),
+        legend=dict(font=dict(color="#94A3B8"), bgcolor="rgba(0,0,0,0)"),
+        xaxis=dict(tickfont=dict(color="#94A3B8", size=11), showgrid=False),
+        yaxis=dict(range=[90, 100], ticksuffix="%", tickfont=dict(color="#64748B"),
+                   showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
+        title=dict(text="Per-Class Precision / Recall / F1", font=dict(color="#94A3B8", size=13), x=0.5),
+    )
+    return fig
+
+
+def overlay_gradcam(pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.5):
+    """Blend GradCAM heatmap onto original MRI image."""
+    if cam is None:
+        return pil_image
+    import matplotlib.cm as cm_lib
+    colormap = cm_lib.get_cmap("jet")
+    heatmap = (colormap(cam)[:, :, :3] * 255).astype(np.uint8)
+    heatmap_pil = Image.fromarray(heatmap).resize(pil_image.size, Image.LANCZOS)
+    base = pil_image.convert("RGBA")
+    overlay = heatmap_pil.convert("RGBA")
+    blended = Image.blend(base, overlay, alpha=alpha)
+    return blended.convert("RGB")
+
+
+# ─── Sidebar ──────────────────────────────────────────────────────────────────
+def render_sidebar(model_status: str):
+    with st.sidebar:
+        st.markdown("""
+        <div style='text-align:center; padding: 20px 0 10px;'>
+          <div style='font-size:2.4rem;'>🧠</div>
+          <div style='font-size:1.2rem; font-weight:700; color:#F1F5F9; margin-top:6px;'>NeuroScan AI</div>
+          <div style='font-size:0.75rem; color:#64748B; margin-top:2px;'>Dementia Detection v1.0</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.divider()
+
+        # Model status
+        if "✅" in model_status:
+            st.success(model_status)
+        else:
+            st.error(model_status)
+
+        st.markdown("**Model Details**")
+        st.markdown("""
+        <div style='font-size:0.82rem; color:#64748B; line-height:1.9;'>
+          🏗 Architecture: EfficientNet-B3<br>
+          🖼 Input: 300×300 RGB<br>
+          🎯 Classes: 4<br>
+          📊 Val Accuracy: 97.2%<br>
+          🗃 Dataset: Kaggle Augmented MRI<br>
+          📦 Images: 44,000+
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.divider()
+
+        st.markdown("**Classes**")
+        for cls, color in CLASS_COLORS.items():
+            icon = CLASS_INFO[cls]["icon"]
+            st.markdown(
