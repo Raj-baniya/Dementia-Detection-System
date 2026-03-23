@@ -789,3 +789,73 @@ def render_sidebar(model_status: str):
         for cls, color in CLASS_COLORS.items():
             icon = CLASS_INFO[cls]["icon"]
             st.markdown(
+                f"<div style='display:flex;align-items:center;gap:8px;margin:6px 0;"
+                f"font-size:0.82rem;color:#94A3B8;'>"
+                f"<div style='width:10px;height:10px;border-radius:50%;background:{color};flex-shrink:0'></div>"
+                f"{icon} {cls}</div>",
+                unsafe_allow_html=True,
+            )
+
+        st.divider()
+
+        st.markdown("**Settings**")
+        gradcam_toggle   = st.toggle("Show GradCAM Heatmap", value=True)
+        tta_views = st.slider("TTA views", 1, 12, 8, 1,
+                      help="More views improve robustness but increase inference time")
+        temperature = st.slider("Temperature (calibration)", 0.60, 1.60, 0.90, 0.05,
+                    help="1.0 = no scaling, <1 sharper confidence, >1 softer confidence")
+        heatmap_alpha    = st.slider("Heatmap opacity", 0.1, 0.9, 0.5, 0.1,
+                                     help="Blend strength of GradCAM overlay") if gradcam_toggle else 0.5
+
+        st.divider()
+        st.markdown("""
+        <div class='disclaimer-box'>
+          ⚠️ <strong>Medical Disclaimer</strong><br>
+          This tool is for <em>research and educational purposes only</em>.
+          It must <strong>not</strong> be used for clinical diagnosis.
+          Always consult a qualified neurologist.
+        </div>
+        """, unsafe_allow_html=True)
+
+    return gradcam_toggle, heatmap_alpha, tta_views, temperature
+
+
+# ─── Main App ─────────────────────────────────────────────────────────────────
+def main():
+    inject_css()
+
+    # Load model
+    model, model_status = load_model()
+    history = load_training_history()
+    model_info_text = load_model_info_text()
+
+    # Sidebar
+    gradcam_toggle, heatmap_alpha, tta_views, temperature = render_sidebar(model_status)
+
+    # ── Hero header ──────────────────────────────────────────────────────────
+    st.markdown("""
+    <div class='hero'>
+      <h1>🧠 NeuroScan AI</h1>
+      <p>AI-powered dementia detection from MRI scans using EfficientNet-B3</p>
+      <div style='margin-top:12px;'>
+        <span class='pill'>EfficientNet-B3</span>
+        <span class='pill'>97.2% Accuracy</span>
+        <span class='pill'>4-Class Classification</span>
+        <span class='pill'>GradCAM Explainability</span>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Top metrics row ───────────────────────────────────────────────────────
+    m1, m2, m3, m4 = st.columns(4)
+    best_val_acc = max(history.get("val_acc", [0])) if history else 0
+    best_val_auroc = max(history.get("val_auroc", [0])) if history else 0
+    if model is not None and model.get("val_acc") is not None:
+        best_val_acc = max(best_val_acc, float(model["val_acc"]))
+    if model is not None and model.get("val_auroc") is not None:
+        best_val_auroc = max(best_val_auroc, float(model["val_auroc"]))
+    metrics_data = [
+        (f"{best_val_acc:.2f}%", "Best Val Accuracy"),
+        (f"{best_val_auroc:.4f}", "Best Val AUROC"),
+        (str(len(history.get("train_loss", []))), "Epochs Run"),
+        ("4", "Dementia Classes"),
