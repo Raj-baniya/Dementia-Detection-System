@@ -859,3 +859,73 @@ def main():
         (f"{best_val_auroc:.4f}", "Best Val AUROC"),
         (str(len(history.get("train_loss", []))), "Epochs Run"),
         ("4", "Dementia Classes"),
+    ]
+    for col, (val, label) in zip([m1, m2, m3, m4], metrics_data):
+        with col:
+            st.markdown(f"""
+            <div class='metric-tile'>
+              <div class='metric-value'>{val}</div>
+              <div class='metric-label'>{label}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Tabs ──────────────────────────────────────────────────────────────────
+    tab_predict, tab_analysis, tab_about = st.tabs([
+        "🔬 Predict",
+        "📊 Model Analysis",
+        "ℹ️ About",
+    ])
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # TAB 1 — PREDICT
+    # ══════════════════════════════════════════════════════════════════════════
+    with tab_predict:
+        col_left, col_right = st.columns([1, 1], gap="large")
+
+        with col_left:
+            st.markdown("<div class='section-heading'>Upload MRI Scan</div>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='font-size:0.84rem; color:#64748B; margin-bottom:12px;'>
+            Upload a brain MRI image (JPEG or PNG). Any MRI scan will receive a prediction.
+            </div>
+            """, unsafe_allow_html=True)
+
+            uploaded_file = st.file_uploader(
+                label="",
+                type=["jpg", "jpeg", "png"],
+                help="Upload any MRI brain scan — JPEG or PNG, up to 10 MB",
+                label_visibility="collapsed",
+            )
+
+            if uploaded_file is not None:
+                # File size check
+                file_bytes = uploaded_file.read()
+                if len(file_bytes) > 10 * 1024 * 1024:
+                    st.error("⚠️ File too large. Maximum allowed size is 10 MB.")
+                    return
+                uploaded_file.seek(0)
+
+                pil_image = Image.open(io.BytesIO(file_bytes))
+
+                # Show image info
+                st.markdown(f"""
+                <div style='font-size:0.8rem; color:#64748B; margin:8px 0;'>
+                  📄 {uploaded_file.name} &nbsp;|&nbsp;
+                  📐 {pil_image.size[0]}×{pil_image.size[1]}px &nbsp;|&nbsp;
+                  💾 {len(file_bytes)/1024:.1f} KB
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.image(pil_image, caption="Uploaded MRI Scan", use_container_width=True)
+
+                # Analyse button
+                if st.button("🔬 Analyse Scan", type="primary", use_container_width=True):
+                    with st.spinner("Preprocessing image..."):
+                        time.sleep(0.4)
+
+                    progress = st.progress(0, text="Running inference...")
+                    for pct in range(0, 90, 15):
+                        time.sleep(0.08)
+                        progress.progress(pct, text="Analysing with EfficientNet-B3...")
