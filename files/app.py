@@ -1009,3 +1009,73 @@ def main():
                 # Recommendation
                 st.info(f"💡 **Recommendation:** {info['recommendation']}")
 
+                # GradCAM
+                if cam is not None and gradcam_toggle:
+                    st.markdown("<div class='section-heading'>GradCAM Attention Map</div>", unsafe_allow_html=True)
+                    blended = overlay_gradcam(pil_image, cam, alpha=heatmap_alpha)
+                    g1, g2 = st.columns(2)
+                    with g1:
+                        st.image(pil_image, caption="Original MRI", use_container_width=True)
+                    with g2:
+                        st.image(blended, caption="GradCAM Overlay", use_container_width=True)
+                    st.caption("🔴 High attention  →  🔵 Low attention  |  Highlighted regions influenced the prediction most.")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # TAB 2 — MODEL ANALYSIS
+    # ══════════════════════════════════════════════════════════════════════════
+    with tab_analysis:
+        st.markdown("<div class='section-heading'>Training Curves (Real History)</div>", unsafe_allow_html=True)
+        if history and PLOTLY_AVAILABLE:
+            st.plotly_chart(plot_training_history(history), use_container_width=True, config={"displayModeBar": False})
+        elif HISTORY_IMG_PATH.exists():
+            st.image(str(HISTORY_IMG_PATH), caption="Training History", use_container_width=True)
+        elif HISTORY_IMG_ALT_PATH.exists():
+            st.image(str(HISTORY_IMG_ALT_PATH), caption="Training History", use_container_width=True)
+        else:
+            st.warning("training_history.json / training_history.png not found.")
+
+        st.markdown("<div class='section-heading'>Confusion Matrix (Real Artifact)</div>", unsafe_allow_html=True)
+        if CONFUSION_IMG_PATH.exists():
+            st.image(str(CONFUSION_IMG_PATH), caption="Validation Confusion Matrix", use_container_width=True)
+        else:
+            st.warning("confusion_matrix.png not found.")
+
+        st.markdown("<div class='section-heading'>Model Metadata</div>", unsafe_allow_html=True)
+        if model_info_text:
+            st.code(model_info_text, language="text")
+        else:
+            st.info("model_info.txt not found.")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # TAB 3 — ABOUT
+    # ══════════════════════════════════════════════════════════════════════════
+    with tab_about:
+        c1, c2 = st.columns([3, 2])
+        with c1:
+            st.markdown("""
+            ## About NeuroScan AI
+
+            NeuroScan AI is a research tool for automated dementia stage classification from
+            brain MRI scans. It uses a fine-tuned **EfficientNet-B3** convolutional neural
+            network trained on the **Kaggle Alzheimer's MRI Dataset** (augmented to 44,000+ images).
+
+            ### How It Works
+            1. **Upload** — User provides a brain MRI (JPEG/PNG)
+            2. **Preprocess** — Resize to 300×300, apply EfficientNet normalization
+            3. **Inference** — Forward pass through EfficientNet-B3
+            4. **Temperature Scaling** — Sharpen softmax outputs (T=0.5)
+            5. **GradCAM** — Generate attention heatmap from last conv layer
+            6. **Display** — Show class, confidence, probability breakdown, and heatmap
+
+            ### Dataset
+            - **Source:** Kaggle Alzheimer's MRI Dataset (augmented)
+            - **Total Images:** 44,000+
+            - **Split:** 80% train / 20% validation (stratified)
+            - **Augmentation:** Horizontal flip, rotation (±15°), zoom (±10%), brightness jitter
+
+            ### Training Details
+            - **Optimizer:** Adam (lr=1e-4, with ReduceLROnPlateau)
+            - **Loss:** Categorical Cross-Entropy
+            - **Epochs:** 50 (early stopping, patience=10)
+            - **Batch Size:** 32
+            - **Regularisation:** Dropout (0.3) + L2 (1e-4)
