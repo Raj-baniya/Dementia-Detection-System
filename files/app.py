@@ -929,3 +929,83 @@ def main():
                     for pct in range(0, 90, 15):
                         time.sleep(0.08)
                         progress.progress(pct, text="Analysing with EfficientNet-B3...")
+
+                    # Run inference
+                    t0 = time.time()
+                    if model is None:
+                        st.error("Real model is not loaded. Check the .pth path and restart the app.")
+                        return
+                    pred_class, confidence = run_inference(
+                        model,
+                        pil_image,
+                        tta_views=tta_views,
+                        temperature=temperature,
+                    )
+                    inference_ms = int((time.time() - t0) * 1000)
+
+                    progress.progress(100, text="Done!")
+                    time.sleep(0.3)
+                    progress.empty()
+
+                    # Generate GradCAM
+                    cam = None
+                    if gradcam_toggle and model is not None:
+                        class_idx = model.get("classes", CLASS_NAMES).index(pred_class)
+                        cam = generate_gradcam(model, pil_image, class_idx)
+
+                    # Store results in session state
+                    st.session_state["result"] = {
+                        "pred_class":   pred_class,
+                        "confidence":   confidence,
+                        "inference_ms": inference_ms,
+                        "pil_image":    pil_image,
+                        "cam":          cam,
+                        "filename":     uploaded_file.name,
+                    }
+
+        # ── Results pane ──────────────────────────────────────────────────────
+        with col_right:
+            if "result" not in st.session_state:
+                st.markdown("""
+                <div class='ns-card' style='text-align:center; padding:60px 24px; opacity:0.5;'>
+                  <div style='font-size:3rem;'>🧠</div>
+                  <div style='color:#64748B; margin-top:12px; font-size:0.9rem;'>
+                    Upload an MRI scan and click<br><strong>Analyse Scan</strong> to see results
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                r = st.session_state["result"]
+                pred_class   = r["pred_class"]
+                inference_ms = r["inference_ms"]
+                pil_image    = r["pil_image"]
+                cam          = r["cam"]
+
+                color = CLASS_COLORS[pred_class]
+                info  = CLASS_INFO[pred_class]
+
+                st.markdown("<div class='section-heading'>Prediction Result</div>", unsafe_allow_html=True)
+
+                # Main result badge
+                st.markdown(f"""
+                <div class='ns-card-accent'>
+                  <div style='font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;'>Predicted Class</div>
+                  <div style='display:flex;align-items:center;gap:12px;'>
+                    <span style='font-size:2rem;'>{info["icon"]}</span>
+                    <div>
+                      <div style='font-size:1.4rem;font-weight:800;color:{color};line-height:1;'>{pred_class}</div>
+                      <div style='font-size:0.8rem;color:#64748B;margin-top:4px;'>{info["description"]}</div>
+                    </div>
+                  </div>
+                  <div style='display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);'>
+                    <div>
+                      <div style='font-size:0.7rem;color:#64748B;text-transform:uppercase;letter-spacing:0.08em;'>Inference Time</div>
+                      <div style='font-size:1.8rem;font-weight:800;color:#94A3B8;font-family:"Space Mono",monospace;'>{inference_ms}ms</div>
+                    </div>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Recommendation
+                st.info(f"💡 **Recommendation:** {info['recommendation']}")
+
