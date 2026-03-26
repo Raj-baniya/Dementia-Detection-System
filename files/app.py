@@ -1079,3 +1079,65 @@ def main():
             - **Epochs:** 50 (early stopping, patience=10)
             - **Batch Size:** 32
             - **Regularisation:** Dropout (0.3) + L2 (1e-4)
+            - **Fine-tuning:** Last 30 layers unfrozen after 20 warm-up epochs
+            """)
+
+        with c2:
+            st.markdown("""
+            ### Quick Setup
+            ```bash
+            # Clone & install
+            git clone <repo>
+            cd neuroscan_streamlit
+            pip install -r requirements.txt
+
+            # Place model
+            mkdir model
+            # copy efficientnet_b3_dementia.h5 → model/
+
+            # Launch
+            streamlit run app.py
+            ```
+
+            ### Tech Stack
+            """)
+            stack = [
+                ("🖥", "Streamlit", "Frontend & UI"),
+                ("🧠", "TensorFlow/Keras", "Model inference"),
+                ("🔢", "NumPy / PIL", "Image processing"),
+                ("📊", "Plotly", "Interactive charts"),
+                ("👁", "OpenCV", "GradCAM resize"),
+            ]
+            for icon, name, role in stack:
+                st.markdown(
+                    f"<div style='display:flex;gap:10px;align-items:center;padding:8px 0;"
+                    f"border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.84rem;'>"
+                    f"<span>{icon}</span>"
+                    f"<div><span style='color:#F1F5F9;font-weight:600;'>{name}</span>"
+                    f"<br><span style='color:#64748B;font-size:0.75rem;'>{role}</span></div></div>",
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("---")
+        st.markdown("""
+        <div class='disclaimer-box' style='font-size:0.84rem;'>
+          <strong>⚠️ Important Medical Disclaimer</strong><br><br>
+          This tool is for <strong>research and educational purposes ONLY</strong>.
+          It is <strong>NOT</strong> a medical device and must not be used for clinical diagnosis,
+          treatment decisions, or patient care. The model was trained on publicly available
+          research data and has not been validated for clinical use.<br><br>
+          Always consult a qualified neurologist or radiologist for medical assessment.
+          Real-world performance may differ from validation metrics.
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Footer ────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div style='text-align:center;padding:32px 0 16px;color:#334155;font-size:0.78rem;'>
+      NeuroScan AI &nbsp;|&nbsp; EfficientNet-B3 &nbsp;|&nbsp; Research Use Only &nbsp;|&nbsp; v1.0
+    </div>
+    """, unsafe_allow_html=True)
+
+
+if __name__ == "__main__":
+    main()
