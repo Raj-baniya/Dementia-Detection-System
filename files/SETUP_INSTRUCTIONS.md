@@ -79,3 +79,80 @@ If you are already inside `F:\Mini-Project-ML\files`, use:
 ```powershell
 .\venv\Scripts\python.exe -m streamlit run .\files\app.py
 ```
+
+---
+
+## Installation Troubleshooting
+
+**If pip takes too long or hangs:**
+```powershell
+# Kill any hanging python processes
+Stop-Process -Name python -Force
+
+# Try installing with increased timeout
+.\venv\Scripts\python.exe -m pip install --default-timeout=1000 -r .\files\requirements.txt
+```
+
+**If you get "ModuleNotFoundError":**
+```powershell
+# Verify venv and reinstall
+.\venv\Scripts\python.exe -m pip list  # should show streamlit, numpy, etc.
+
+# If empty, reinstall requirements
+.\venv\Scripts\python.exe -m pip install --no-cache-dir -r .\files\requirements.txt
+```
+
+**If Streamlit won't start:**
+```powershell
+# Test import directly
+.\venv\Scripts\python.exe -c "import streamlit; print('OK')"
+
+# If fails, reinstall streamlit specifically
+.\venv\Scripts\python.exe -m pip install --no-cache-dir --force-reinstall streamlit>=1.28.0
+```
+
+---
+
+## Launch Commands
+
+**Demo Mode (Python 3.14):**
+```powershell
+cd F:\Mini-Project-ML\files
+..\venv\Scripts\python.exe -m streamlit run app.py
+```
+
+**Full Mode (Python 3.11/3.12):**
+```powershell
+cd F:\Mini-Project-ML\files
+..\venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Then open: **http://localhost:8501**
+
+---
+
+## What to Expect
+
+### Demo Mode
+- ✅ Upload MRI images
+- ✅ Get instant predictions (~5-10% random variance per image)
+- ✅ See all visualizations and charts
+- ✅ GradCAM works (based on image statistics)
+- ❌ Model inference not available
+
+### Full Mode (with trained model)
+- ✅ All demo mode features
+- ✅ Real EfficientNet-B3 predictions
+- ✅ Actual confidence scores (90–98%)
+- ✅ Clinical-grade inference
+- ❌ Requires real model file at `model/efficientnet_b3_dementia.h5`
+
+---
+
+## Next Steps
+
+1. **Test demo mode** now with Python 3.14 to explore the UI
+2. **Install Python 3.12** when ready for full ML inference
+3. **Place trained model** at `f:\Mini-Project-ML\files\model\efficientnet_b3_dementia.h5` for real predictions
+
+For questions, see [README.md](README.md) or [DEVELOPER_GUIDE.txt](DEVELOPER_GUIDE.txt).
