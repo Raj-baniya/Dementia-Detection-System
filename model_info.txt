@@ -7,3 +7,4 @@ Final AUROC     : 0.9994
 Classes         : ['MildDemented', 'ModerateDemented', 'NonDemented', 'VeryMildDemented']
 Phase at save   : 3
 Total epochs run: 30
+Release version : v1.0.0
