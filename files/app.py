@@ -817,6 +817,14 @@ def render_sidebar(model_status: str):
         </div>
         """, unsafe_allow_html=True)
 
+        st.divider()
+        st.markdown("""
+        <div style='text-align:center;font-size:0.75rem;color:#64748B;line-height:1.6;'>
+          <a href='https://github.com/Raj-baniya/Dementia-Detection-System' target='_blank' style='color:#38BDF8;text-decoration:none;'>GitHub Repository</a> &bull;
+          <span style='color:#94A3B8;'>v1.0.0</span>
+        </div>
+        """, unsafe_allow_html=True)
+
     return gradcam_toggle, heatmap_alpha, tta_views, temperature
 
 
