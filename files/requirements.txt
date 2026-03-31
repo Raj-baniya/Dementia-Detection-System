@@ -33,3 +33,4 @@ timm>=1.0.0; python_version<'3.13'
 # Optional — for report export
 # reportlab>=4.0.0
 # fpdf2>=2.7.0
+# Verified for Python 3.11/3.12 deployment
