@@ -6,19 +6,36 @@ echo.
 echo 🧠  Launching NeuroScan AI...
 echo.
 
-set VENV_PYTHON=f:\Mini-Project-ML\venv\Scripts\python.exe
-set APP_PATH=f:\Mini-Project-ML\files\app.py
+set VENV_PYTHON=%~dp0venv\Scripts\python.exe
+set HARDCODED_PYTHON=f:\Mini-Project-ML\venv\Scripts\python.exe
+set APP_PATH=%~dp0files\app.py
 
-if not exist %VENV_PYTHON% (
-    echo ❌ Virtual environment not found at %VENV_PYTHON%
-    echo Create it with: python -m venv f:\Mini-Project-ML\venv
-    pause
-    exit /b 1
+if exist "%VENV_PYTHON%" (
+    echo ✓ Using workspace venv: %VENV_PYTHON%
+    goto :RUN
 )
 
-echo ✓ Using Python from venv
+if exist "%HARDCODED_PYTHON%" (
+    set VENV_PYTHON=%HARDCODED_PYTHON%
+    echo ✓ Using configured venv: %VENV_PYTHON%
+    goto :RUN
+)
+
+where python >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    set VENV_PYTHON=python
+    echo ✓ Using system Python
+    goto :RUN
+)
+
+echo ❌ Python environment not found.
+echo Create it with: python -m venv venv
+pause
+exit /b 1
+
+:RUN
 echo ✓ Launching app at http://localhost:8501
 echo.
 
-%VENV_PYTHON% -m streamlit run %APP_PATH%
+%VENV_PYTHON% -m streamlit run "%APP_PATH%"
 pause
