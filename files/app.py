@@ -895,8 +895,8 @@ def main():
         with col_left:
             st.markdown("<div class='section-heading'>Upload MRI Scan</div>", unsafe_allow_html=True)
             st.markdown("""
-            <div style='font-size:0.84rem; color:#64748B; margin-bottom:12px;'>
-            Upload a brain MRI image (JPEG or PNG). Any MRI scan will receive a prediction.
+            <div style='font-size:0.84rem; color:#64748B; margin-bottom:12px; line-height:1.5;'>
+            Upload a brain MRI image (<strong>JPEG</strong> or <strong>PNG</strong>). Works best with <em>Axial (horizontal)</em>, <em>Coronal</em>, or <em>Sagittal</em> cross-sections.
             </div>
             """, unsafe_allow_html=True)
 
@@ -906,6 +906,9 @@ def main():
                 help="Upload any MRI brain scan — JPEG or PNG, up to 10 MB",
                 label_visibility="collapsed",
             )
+
+            if uploaded_file is None:
+                st.info("💡 Tip: Upload an axial T1/T2-weighted MRI scan for optimal classification confidence.")
 
             if uploaded_file is not None:
                 # File size check
