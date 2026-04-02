@@ -280,6 +280,25 @@ scikit-learn>=1.3       Metrics and confusion matrix (training)
 
 ---
 
+## ❓ Frequently Asked Questions (FAQ)
+
+<details>
+<summary><b>Can I run inference without a GPU?</b></summary>
+Yes. EfficientNet-B3 is optimized for transfer learning and can perform single-image CPU inference in under 2 seconds. Install <code>tensorflow-cpu</code> if no dedicated NVIDIA GPU is present.
+</details>
+
+<details>
+<summary><b>What should I do if Python 3.14 fails to install TensorFlow?</b></summary>
+TensorFlow currently provides official wheels for Python 3.9 through 3.12. For full ML capabilities, create a virtual environment using Python 3.11 or 3.12. On Python 3.14, NeuroScan AI automatically runs in Demo Mode.
+</details>
+
+<details>
+<summary><b>How does GradCAM explainability work?</b></summary>
+GradCAM computes gradients of the target class score with respect to the feature map activations of the final convolutional layer of EfficientNet-B3, highlighting anatomical regions associated with hippocampal and cortical atrophy.
+</details>
+
+---
+
 ## 📄 Licence
 
 MIT — free for research and educational use.
